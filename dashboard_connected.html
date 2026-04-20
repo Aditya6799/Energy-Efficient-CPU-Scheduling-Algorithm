@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Thread Management Library — Live Connected Demo</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;700&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#0d1117; --bg2:#161b22; --bg3:#21262d; --border:#30363d;
+  --accent:#58a6ff; --green:#3fb950; --yellow:#d29922; --red:#f85149;
+  --purple:#bc8cff; --cyan:#39c5cf; --text:#c9d1d9; --muted:#8b949e;
+  --mono:'JetBrains Mono',monospace; --sans:'Space Grotesk',sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);height:100vh;display:flex;flex-direction:column;overflow:hidden;}
+
+.header{background:var(--bg2);border-bottom:1px solid var(--border);padding:12px 20px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.logo{display:flex;align-items:center;gap:10px;}
+.logo-icon{width:34px;height:34px;border-radius:8px;background:linear-gradient(135deg,#58a6ff,#bc8cff);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-weight:700;color:#fff;font-size:15px;}
+.logo-title{font-size:14px;font-weight:700;}
+.logo-sub{font-size:11px;color:var(--muted);font-family:var(--mono);}
+.conn-badge{display:flex;align-items:center;gap:6px;padding:5px 12px;border-radius:20px;font-size:11px;font-family:var(--mono);transition:all 0.3s;}
+.conn-badge.connected{background:rgba(63,185,80,0.1);border:1px solid rgba(63,185,80,0.3);color:var(--green);}
+.conn-badge.disconnected{background:rgba(248,81,73,0.1);border:1px solid rgba(248,81,73,0.3);color:var(--red);}
+.conn-badge.connecting{background:rgba(210,153,34,0.1);border:1px solid rgba(210,153,34,0.3);color:var(--yellow);}
+.cbdot{width:7px;height:7px;border-radius:50%;}
+.cbdot.connected{background:var(--green);animation:pulse 1.4s infinite;}
+.cbdot.disconnected{background:var(--red);}
+.cbdot.connecting{background:var(--yellow);animation:pulse 0.8s infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
+
+.layout{display:grid;grid-template-columns:260px 1fr 1fr;flex:1;overflow:hidden;}
+.panel{border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;}
+.panel:last-child{border-right:none;}
+.phead{background:var(--bg2);border-bottom:1px solid var(--border);padding:10px 14px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.phead-title{font-size:12px;font-weight:600;}
+.tag{font-size:10px;font-family:var(--mono);padding:2px 7px;border-radius:4px;background:rgba(88,166,255,0.1);color:var(--accent);border:1px solid rgba(88,166,255,0.2);}
+.pbody{flex:1;overflow-y:auto;padding:12px;}
+.pbody::-webkit-scrollbar{width:3px;}
+.pbody::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+
+.sec-lbl{font-size:10px;font-family:var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;margin-top:14px;}
+.sec-lbl:first-child{margin-top:0;}
+.btn{width:100%;padding:8px;border-radius:6px;border:none;cursor:pointer;font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:0.3px;transition:all 0.15s;margin-bottom:6px;}
+.btn-green{background:rgba(63,185,80,0.15);color:var(--green);border:1px solid rgba(63,185,80,0.3);}
+.btn-blue{background:rgba(88,166,255,0.15);color:var(--accent);border:1px solid rgba(88,166,255,0.3);}
+.btn-yellow{background:rgba(210,153,34,0.15);color:var(--yellow);border:1px solid rgba(210,153,34,0.3);}
+.btn-red{background:rgba(248,81,73,0.15);color:var(--red);border:1px solid rgba(248,81,73,0.3);}
+.btn:hover{filter:brightness(1.2);transform:translateY(-1px);}
+.btn:disabled{opacity:0.35;cursor:not-allowed;transform:none;}
+.divider{height:1px;background:var(--border);margin:12px 0;}
+
+.info-box{background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:10px 12px;margin-bottom:8px;}
+.info-row{display:flex;justify-content:space-between;font-size:11px;padding:3px 0;}
+.info-lbl{color:var(--muted);font-family:var(--mono);}
+.info-val{font-family:var(--mono);font-weight:600;}
+
+/* stats */
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:12px;border-bottom:1px solid var(--border);flex-shrink:0;}
+.sbox{background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:8px 10px;}
+.slbl{font-size:10px;color:var(--muted);font-family:var(--mono);margin-bottom:3px;}
+.sval{font-size:20px;font-weight:700;font-family:var(--mono);}
+
+/* thread grid */
+.tgrid{display:grid;grid-template-columns:repeat(8,1fr);gap:4px;padding:12px;}
+.tcell{aspect-ratio:1;border-radius:5px;border:1px solid var(--border);background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:9px;font-family:var(--mono);color:var(--muted);transition:all 0.3s;}
+.tcell.running{background:rgba(88,166,255,0.15);border-color:rgba(88,166,255,0.5);color:var(--accent);animation:tpulse 1.8s infinite;}
+.tcell.waiting{background:rgba(210,153,34,0.15);border-color:rgba(210,153,34,0.4);color:var(--yellow);}
+.tcell.idle{background:rgba(63,185,80,0.1);border-color:rgba(63,185,80,0.3);color:var(--green);}
+.tcell.done{background:rgba(248,81,73,0.08);border-color:rgba(248,81,73,0.2);color:var(--red);opacity:0.5;}
+@keyframes tpulse{0%,100%{box-shadow:0 0 0 0 rgba(88,166,255,0.4)}50%{box-shadow:0 0 0 4px rgba(88,166,255,0)}}
+
+.legend{display:flex;gap:10px;padding:0 12px 10px;flex-wrap:wrap;}
+.leg{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--muted);font-family:var(--mono);}
+.ldot{width:7px;height:7px;border-radius:2px;}
+
+/* terminal */
+.term-topbar{background:var(--bg2);border-bottom:1px solid var(--border);padding:8px 14px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.term-dots{display:flex;gap:5px;}
+.tdot{width:10px;height:10px;border-radius:50%;}
+.terminal{flex:1;overflow-y:auto;padding:12px;font-family:var(--mono);font-size:12px;line-height:1.9;background:var(--bg);}
+.terminal::-webkit-scrollbar{width:3px;}
+.terminal::-webkit-scrollbar-thumb{background:var(--border);}
+
+.tline{display:flex;gap:8px;align-items:flex-start;}
+.ttime{color:#3d444d;min-width:55px;flex-shrink:0;}
+.c-output {color:var(--text);}
+.c-create {color:var(--accent);}
+.c-join   {color:#79c0ff;}
+.c-sync   {color:var(--purple);}
+.c-pool   {color:var(--cyan);}
+.c-thread {color:var(--accent);}
+.c-worker {color:#79c0ff;}
+.c-perf   {color:#ffa657;font-weight:600;}
+.c-pass   {color:var(--green);}
+.c-fail   {color:var(--red);}
+.c-error  {color:var(--red);}
+.c-success{color:var(--green);font-weight:600;}
+.c-box    {color:var(--green);}
+.c-section{color:var(--cyan);}
+.c-info   {color:var(--text);}
+.c-stats  {color:var(--yellow);}
+.c-status {color:var(--muted);font-style:italic;}
+.c-done   {color:var(--muted);border-top:1px solid var(--border);margin-top:4px;padding-top:4px;}
+
+/* progress bar */
+.prog-wrap{padding:0 12px 10px;flex-shrink:0;}
+.prog-lbl{display:flex;justify-content:space-between;font-size:10px;color:var(--muted);font-family:var(--mono);margin-bottom:4px;}
+.prog-bg{height:4px;background:var(--bg3);border-radius:2px;overflow:hidden;}
+.prog-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--purple),var(--accent));transition:width 0.4s;}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">
+    <div class="logo-icon">T</div>
+    <div>
+      <div class="logo-title">Thread Management Library</div>
+      <div class="logo-sub">&nbsp;Real C Output — Live</div>
+    </div>
+  </div>
+  <div class="conn-badge connecting" id="conn-badge">
+    <div class="cbdot connecting" id="conn-dot"></div>
+    <span id="conn-text">Connecting...</span>
+  </div>
+</div>
+
+<div class="layout">
+
+  <!-- LEFT: Controls -->
+  <div class="panel">
+    <div class="phead"><span class="phead-title">Controls</span><span class="tag">LIVE</span></div>
+    <div class="pbody">
+
+      <div class="sec-lbl">Run C Program</div>
+      <button class="btn btn-green" id="btn-run" onclick="runProgram()" disabled>▶ Run ./thread_library</button>
+      <button class="btn btn-blue"  id="btn-test" onclick="runTest()" disabled>▶ Run make test</button>
+      <button class="btn btn-red"   onclick="clearTerminal()">✕ Clear terminal</button>
+
+      <div class="divider"></div>
+
+      <div class="sec-lbl">Connection Info</div>
+      <div class="info-box">
+        <div class="info-row"><span class="info-lbl">server</span><span class="info-val" style="color:var(--accent)">localhost:8765</span></div>
+        <div class="info-row"><span class="info-lbl">protocol</span><span class="info-val" style="color:var(--cyan)">WebSocket</span></div>
+        <div class="info-row"><span class="info-lbl">binary</span><span class="info-val" style="color:var(--green)">./thread_library</span></div>
+        <div class="info-row"><span class="info-lbl">status</span><span class="info-val" id="info-status" style="color:var(--yellow)">connecting</span></div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="sec-lbl">Architecture</div>
+      <div class="info-box" style="font-size:11px;line-height:1.8;color:var(--muted);font-family:var(--mono);">
+        <div style="color:var(--accent)">C Binary</div>
+        <div>&nbsp;&nbsp;↓ stdout</div>
+        <div style="color:var(--cyan)">Python Server</div>
+        <div>&nbsp;&nbsp;↓ WebSocket</div>
+        <div style="color:var(--green)">This Browser</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- MIDDLE: Thread Visualizer -->
+  <div class="panel" style="display:flex;flex-direction:column;">
+    <div class="phead">
+      <span class="phead-title">Thread Visualizer</span>
+      <span class="tag" id="grid-tag">WAITING</span>
+    </div>
+    <div class="stats">
+      <div class="sbox"><div class="slbl">threads seen</div><div class="sval" id="s-threads" style="color:var(--accent)">0</div></div>
+      <div class="sbox"><div class="slbl">tasks done</div><div class="sval" id="s-done" style="color:var(--green)">0</div></div>
+      <div class="sbox"><div class="slbl">tests passed</div><div class="sval" id="s-pass" style="color:var(--green)">0</div></div>
+      <div class="sbox"><div class="slbl">tests failed</div><div class="sval" id="s-fail" style="color:var(--red)">0</div></div>
+    </div>
+    <div class="tgrid" id="tgrid"></div>
+    <div class="legend">
+      <div class="leg"><div class="ldot" style="background:var(--accent)"></div>running</div>
+      <div class="leg"><div class="ldot" style="background:var(--yellow)"></div>waiting</div>
+      <div class="leg"><div class="ldot" style="background:var(--green)"></div>idle</div>
+      <div class="leg"><div class="ldot" style="background:var(--red)"></div>terminated</div>
+    </div>
+    <div class="prog-wrap">
+      <div class="prog-lbl"><span>program progress</span><span id="prog-pct">0%</span></div>
+      <div class="prog-bg"><div class="prog-fill" id="prog-bar" style="width:0%"></div></div>
+    </div>
+  </div>
+
+  <!-- RIGHT: Terminal (REAL C OUTPUT) -->
+  <div class="panel" style="display:flex;flex-direction:column;">
+    <div class="term-topbar">
+      <div class="term-dots">
+        <div class="tdot" style="background:#ff5f57"></div>
+        <div class="tdot" style="background:#febc2e"></div>
+        <div class="tdot" style="background:#28c840"></div>
+      </div>
+      <span style="font-size:11px;color:var(--muted);font-family:var(--mono)">Thread@WSL — REAL OUTPUT</span>
+      <span style="font-size:10px;color:var(--green);font-family:var(--mono)" id="live-tag">● LIVE</span>
+    </div>
+    <div class="terminal" id="terminal">
+      <div class="tline"><span class="ttime"></span><span class="c-status">Waiting for server connection...</span></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ══ State ══
+const ST = {
+  ws: null, connected: false,
+  threadCount: 0, tasksDone: 0, passCount: 0, failCount: 0,
+  threads: {}, progVal: 0,
+};
+
+// ══ WebSocket ══
+function connect() {
+  ST.ws = new WebSocket('ws://localhost:8765');
+
+  ST.ws.onopen = () => {
+    ST.connected = true;
+    setConn('connected', 'Connected — C server live');
+    document.getElementById('btn-run').disabled  = false;
+    document.getElementById('btn-test').disabled = false;
+    tlog('WebSocket connected to Python bridge ✓', 'c-status');
+    tlog('Click "Run ./thread_library" to start', 'c-status');
+  };
+
+  ST.ws.onmessage = (e) => {
+    const d = JSON.parse(e.data);
+    handleMsg(d);
+  };
+
+  ST.ws.onclose = () => {
+    ST.connected = false;
+    setConn('disconnected', 'Server disconnected');
+    document.getElementById('btn-run').disabled  = true;
+    document.getElementById('btn-test').disabled = true;
+    setTimeout(connect, 3000); // auto-reconnect
+  };
+
+  ST.ws.onerror = () => {
+    setConn('disconnected', 'Cannot reach server');
+  };
+}
+
+function setConn(state, text) {
+  const badge = document.getElementById('conn-badge');
+  const dot   = document.getElementById('conn-dot');
+  const span  = document.getElementById('conn-text');
+  const info  = document.getElementById('info-status');
+  badge.className = `conn-badge ${state}`;
+  dot.className   = `cbdot ${state}`;
+  span.textContent = text;
+  info.textContent = state;
+  info.style.color = state === 'connected' ? 'var(--green)' : state === 'connecting' ? 'var(--yellow)' : 'var(--red)';
+}
+
+// ══ Handle incoming messages ══
+function handleMsg(d) {
+  if (d.type === 'blank') { document.getElementById('terminal').appendChild(document.createElement('div')); return; }
+
+  tlog(d.msg, 'c-' + d.type);
+
+  // Update stats from real output
+  const msg = d.msg || '';
+
+  if (d.type === 'create' || msg.includes('Created')) {
+    ST.threadCount++;
+    const m = msg.match(/Thread\s+(\d+)/);
+    if (m) addThread(parseInt(m[1]), 'running');
+    document.getElementById('s-threads').textContent = ST.threadCount;
+    updateGridTag('RUNNING');
+    setProgress(20);
+  }
+  if (d.type === 'join' || msg.includes('Joined')) {
+    const m = msg.match(/Thread\s+(\d+)/);
+    if (m) setThread(parseInt(m[1]), 'done');
+    ST.tasksDone++;
+    document.getElementById('s-done').textContent = ST.tasksDone;
+    setProgress(50);
+  }
+  if (d.type === 'pass') {
+    ST.passCount++;
+    document.getElementById('s-pass').textContent = ST.passCount;
+  }
+  if (d.type === 'fail') {
+    ST.failCount++;
+    document.getElementById('s-fail').textContent = ST.failCount;
+  }
+  if (msg.includes('pool_init') || msg.includes('Initialized | size')) {
+    const m = msg.match(/size:\s*(\d+)/);
+    if (m) initPoolThreads(parseInt(m[1]));
+    setProgress(30);
+    updateGridTag('POOL ACTIVE');
+  }
+  if (msg.includes('Destroyed')) {
+    Object.keys(ST.threads).forEach(id => setThread(parseInt(id), 'done'));
+    updateGridTag('TERMINATED');
+    setProgress(90);
+  }
+  if (d.type === 'perf' && msg.includes('tasks/sec')) setProgress(85);
+  if (d.type === 'success' || d.type === 'done') setProgress(100);
+
+  // Sync engine visual feedback
+  if (msg.includes('Locked') && !msg.includes('Un')) {
+    Object.values(ST.threads).filter(t=>t.state==='running').slice(0,2).forEach(t=>{ t.state='waiting'; updateCell(t); });
+  }
+  if (msg.includes('Unlocked')) {
+    Object.values(ST.threads).filter(t=>t.state==='waiting').forEach(t=>{ t.state='running'; updateCell(t); });
+  }
+}
+
+// ══ Thread grid ══
+function initPoolThreads(n) {
+  ST.threads = {};
+  for (let i = 1; i <= n; i++) ST.threads[i] = { id: i, state: 'idle' };
+  renderGrid();
+}
+function addThread(id, state) {
+  ST.threads[id] = { id, state };
+  renderGrid();
+}
+function setThread(id, state) {
+  if (ST.threads[id]) { ST.threads[id].state = state; renderGrid(); }
+}
+function updateCell(th) { renderGrid(); }
+
+function renderGrid() {
+  const grid = document.getElementById('tgrid');
+  grid.innerHTML = '';
+  const ids = Object.keys(ST.threads).map(Number).sort((a,b)=>a-b);
+  const total = Math.max(ids.length, 16);
+  for (let i = 0; i < total; i++) {
+    const cell = document.createElement('div');
+    cell.className = 'tcell';
+    const th = ST.threads[ids[i]];
+    if (th) { cell.classList.add(th.state); cell.textContent = `T${th.id}`; }
+    else cell.textContent = '—';
+    grid.appendChild(cell);
+  }
+}
+
+function updateGridTag(text) { document.getElementById('grid-tag').textContent = text; }
+function setProgress(v) {
+  ST.progVal = Math.max(ST.progVal, v);
+  document.getElementById('prog-bar').style.width = ST.progVal + '%';
+  document.getElementById('prog-pct').textContent  = ST.progVal + '%';
+}
+
+// ══ Terminal ══
+function tlog(text, cls) {
+  const term = document.getElementById('terminal');
+  const now  = new Date();
+  const ts   = `${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}:${now.getSeconds().toString().padStart(2,'0')}`;
+  const line = document.createElement('div');
+  line.className = 'tline';
+  line.innerHTML = `<span class="ttime">[${ts}]</span><span class="${cls || 'c-output'}">${text.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</span>`;
+  term.appendChild(line);
+  term.scrollTop = term.scrollHeight;
+  if (term.children.length > 600) term.removeChild(term.firstChild);
+}
+function clearTerminal() {
+  document.getElementById('terminal').innerHTML = '';
+  ST.threadCount = ST.tasksDone = ST.passCount = ST.failCount = ST.progVal = 0;
+  ['s-threads','s-done','s-pass','s-fail'].forEach(id => document.getElementById(id).textContent = '0');
+  ST.threads = {}; renderGrid(); setProgress(0);
+  document.getElementById('prog-bar').style.width = '0%';
+}
+
+// ══ Commands ══
+function runProgram() {
+  if (!ST.connected) return;
+  clearTerminal();
+  ST.ws.send(JSON.stringify({ cmd: 'run' }));
+  tlog('$ ./thread_library', 'c-status');
+}
+function runTest() {
+  if (!ST.connected) return;
+  clearTerminal();
+  ST.ws.send(JSON.stringify({ cmd: 'test' }));
+  tlog('$ make test', 'c-status');
+}
+
+// ══ Init ══
+renderGrid();
+connect();
+</script>
+</body>
+</html>
