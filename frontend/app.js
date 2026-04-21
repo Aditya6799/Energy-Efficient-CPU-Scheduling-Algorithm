@@ -1,10 +1,6 @@
-/**
- * ═══════════════════════════════════════════════════════════════
- *  AEAS — Adaptive Energy-Aware CPU Scheduler
- *  Frontend Application Logic
- *  Handles: Process input, API calls, Chart rendering (Plotly.js)
- * ═══════════════════════════════════════════════════════════════
- */
+//  *  AEAS — Adaptive Energy-Aware CPU Scheduler
+//  *  Frontend Application Logic
+//  *  Handles: Process input, API calls, Chart rendering (Plotly.js)
 
 // ─── Configuration ─────────────────────────────────────────────
 const API_BASE = '';
