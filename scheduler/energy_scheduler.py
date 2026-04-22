@@ -1,6 +1,6 @@
 """
 Adaptive Energy-Aware Scheduler (AEAS)
-=======================================
+
 A custom CPU scheduling algorithm that minimizes energy consumption
 through intelligent process classification and DVFS integration,
 while maintaining performance degradation ≤ 5%.

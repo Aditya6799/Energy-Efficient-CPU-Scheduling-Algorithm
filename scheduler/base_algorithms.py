@@ -6,9 +6,9 @@ as baseline comparisons for the AEAS algorithm.
 
 from scheduler.utils import deep_copy_processes, compute_metrics
 
-# ─────────────────────────────────────────────
+
 #  Context switch overhead constant (time units)
-# ─────────────────────────────────────────────
+
 # No global CONTEXT_SWITCH_TIME; passed as argument
 
 def run_fcfs(processes, context_switch_time=0.5):
