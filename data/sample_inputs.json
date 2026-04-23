@@ -1,0 +1,65 @@
+{
+    "test_cases": {
+        "basic": {
+            "description": "Basic test with 5 diverse processes",
+            "processes": [
+                {"id": "P1", "arrival_time": 0, "burst_time": 6, "priority": 1},
+                {"id": "P2", "arrival_time": 1, "burst_time": 3, "priority": 4},
+                {"id": "P3", "arrival_time": 2, "burst_time": 8, "priority": 3},
+                {"id": "P4", "arrival_time": 3, "burst_time": 2, "priority": 2},
+                {"id": "P5", "arrival_time": 4, "burst_time": 5, "priority": 5}
+            ]
+        },
+        "high_load": {
+            "description": "High load scenario with 8 processes arriving rapidly",
+            "processes": [
+                {"id": "P1", "arrival_time": 0, "burst_time": 10, "priority": 3},
+                {"id": "P2", "arrival_time": 0, "burst_time": 4, "priority": 1},
+                {"id": "P3", "arrival_time": 1, "burst_time": 7, "priority": 5},
+                {"id": "P4", "arrival_time": 1, "burst_time": 2, "priority": 2},
+                {"id": "P5", "arrival_time": 2, "burst_time": 6, "priority": 4},
+                {"id": "P6", "arrival_time": 2, "burst_time": 3, "priority": 1},
+                {"id": "P7", "arrival_time": 3, "burst_time": 9, "priority": 5},
+                {"id": "P8", "arrival_time": 3, "burst_time": 1, "priority": 2}
+            ]
+        },
+        "same_arrival": {
+            "description": "All processes arrive at time 0 — tests pure scheduling",
+            "processes": [
+                {"id": "P1", "arrival_time": 0, "burst_time": 5, "priority": 3},
+                {"id": "P2", "arrival_time": 0, "burst_time": 2, "priority": 1},
+                {"id": "P3", "arrival_time": 0, "burst_time": 8, "priority": 4},
+                {"id": "P4", "arrival_time": 0, "burst_time": 3, "priority": 2},
+                {"id": "P5", "arrival_time": 0, "burst_time": 6, "priority": 5},
+                {"id": "P6", "arrival_time": 0, "burst_time": 1, "priority": 1}
+            ]
+        },
+        "mixed_priorities": {
+            "description": "Mix of critical (≤2) and non-critical processes with varied bursts",
+            "processes": [
+                {"id": "P1", "arrival_time": 0, "burst_time": 12, "priority": 5},
+                {"id": "P2", "arrival_time": 1, "burst_time": 3, "priority": 1},
+                {"id": "P3", "arrival_time": 2, "burst_time": 7, "priority": 2},
+                {"id": "P4", "arrival_time": 3, "burst_time": 1, "priority": 4},
+                {"id": "P5", "arrival_time": 5, "burst_time": 9, "priority": 3},
+                {"id": "P6", "arrival_time": 6, "burst_time": 4, "priority": 1},
+                {"id": "P7", "arrival_time": 8, "burst_time": 2, "priority": 2}
+            ]
+        },
+        "single_process": {
+            "description": "Edge case: single process",
+            "processes": [
+                {"id": "P1", "arrival_time": 0, "burst_time": 5, "priority": 3}
+            ]
+        },
+        "staggered_arrival": {
+            "description": "Processes arrive with significant gaps — tests idle handling",
+            "processes": [
+                {"id": "P1", "arrival_time": 0, "burst_time": 3, "priority": 2},
+                {"id": "P2", "arrival_time": 10, "burst_time": 5, "priority": 4},
+                {"id": "P3", "arrival_time": 20, "burst_time": 2, "priority": 1},
+                {"id": "P4", "arrival_time": 25, "burst_time": 7, "priority": 3}
+            ]
+        }
+    }
+}
