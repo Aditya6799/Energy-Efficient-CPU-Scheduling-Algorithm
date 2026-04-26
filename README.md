@@ -91,6 +91,38 @@ Open **http://127.0.0.1:5000** in your browser.
 }
 ```
 
+### Example API Calls
+
+Run an AEAS simulation:
+
+```bash
+curl -X POST http://127.0.0.1:5000/api/simulate \
+  -H "Content-Type: application/json" \
+  -d '{
+    "processes": [
+      { "id": "P1", "arrival_time": 0, "burst_time": 6, "priority": 1 },
+      { "id": "P2", "arrival_time": 1, "burst_time": 3, "priority": 4 }
+    ],
+    "dvfs_enabled": true,
+    "context_switch_time": 0.5
+  }'
+```
+
+Compare AEAS against the baseline algorithms:
+
+```bash
+curl -X POST http://127.0.0.1:5000/api/compare \
+  -H "Content-Type: application/json" \
+  -d '{
+    "processes": [
+      { "id": "P1", "arrival_time": 0, "burst_time": 6, "priority": 1 },
+      { "id": "P2", "arrival_time": 1, "burst_time": 3, "priority": 4 }
+    ],
+    "dvfs_enabled": true,
+    "context_switch_time": 0.5
+  }'
+```
+
 ## Running Tests
 
 ```bash
