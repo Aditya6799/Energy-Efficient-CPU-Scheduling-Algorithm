@@ -57,6 +57,10 @@ Each process P_i = (AT_i, BT_i, Pri_i) is classified dynamically:
 ## Installation & Setup
 
 ```bash
+# Optional: create a virtual environment
+python -m venv .venv
+source .venv/bin/activate
+
 # Install dependencies
 pip install -r requirements.txt
 
@@ -73,6 +77,19 @@ Open **http://127.0.0.1:5000** in your browser.
 | POST | `/api/simulate` | Run AEAS simulation |
 | POST | `/api/compare` | AEAS vs all baseline algorithms |
 | POST | `/api/evaluate` | Full evaluation with recommendation |
+
+### Example Request Body
+
+```json
+{
+  "processes": [
+    { "id": "P1", "arrival_time": 0, "burst_time": 6, "priority": 1 },
+    { "id": "P2", "arrival_time": 1, "burst_time": 3, "priority": 4 }
+  ],
+  "dvfs_enabled": true,
+  "context_switch_time": 0.5
+}
+```
 
 ## Running Tests
 
