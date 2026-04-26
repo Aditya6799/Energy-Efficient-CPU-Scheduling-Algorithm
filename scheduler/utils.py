@@ -34,12 +34,12 @@ def compute_median(values):
 def get_ready_queue(processes, current_time, completed_ids):
     """
     Get all processes that have arrived by current_time and are not yet completed.
-    
+
     Args:
         processes: List of process dicts with 'arrival_time' key
         current_time: Current simulation time
         completed_ids: Set of completed process IDs
-        
+
     Returns:
         List of processes in the ready queue
     """
@@ -99,7 +99,7 @@ def compute_cpu_utilization(processes_result, total_time):
 def compute_metrics(processes_result, total_time):
     """
     Compute all standard scheduling performance metrics.
-    
+
     Returns:
         Dictionary with avg_waiting_time, avg_turnaround_time,
         throughput, and cpu_utilization.

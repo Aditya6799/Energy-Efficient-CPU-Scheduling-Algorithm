@@ -34,16 +34,16 @@ CONTEXT_SWITCH_POWER = 0.3  # Watts during context switch
 def classify_process(process, threshold):
     """
     Classify a process into CRITICAL, SHORT, or LONG category.
-    
+
     Rules:
         - CRITICAL: priority ≤ 2 (urgent system tasks)
         - SHORT:    burst_time ≤ adaptive threshold (quick tasks)
         - LONG:     everything else (background / heavy tasks)
-    
+
     Args:
         process: Process dict with 'priority' and 'burst_time'
         threshold: Adaptive threshold (median burst time of ready queue)
-        
+
     Returns:
         Classification string: 'CRITICAL', 'SHORT', or 'LONG'
     """
@@ -58,15 +58,15 @@ def classify_process(process, threshold):
 def compute_adaptive_threshold(ready_queue):
     """
     Compute the adaptive threshold T as the median burst time of the ready queue.
-    
+
     T = median(BT of all processes in RQ)
-    
+
     This ensures the SHORT/LONG boundary adapts dynamically to the current
     workload composition rather than using a static cutoff.
-    
+
     Args:
         ready_queue: List of processes currently in the ready queue
-        
+
     Returns:
         Median burst time value
     """
@@ -80,34 +80,34 @@ def sort_ready_queue(ready_queue, threshold, current_time):
         Primary:   Process class (CRITICAL=0, SHORT=1, LONG=2)
         Secondary: Burst time (ascending — favor shorter tasks within class)
         Tertiary:  Arrival time (ascending — FCFS tiebreaker)
-    
+
     Urgent processes (starving too long) are promoted to the front.
-    
+
     Args:
         ready_queue: List of processes in the ready queue
         threshold: Adaptive threshold for classification
         current_time: Current simulation time
-        
+
     Returns:
         Sorted ready queue with classification annotations
     """
     class_order = {'CRITICAL': 0, 'SHORT': 1, 'LONG': 2}
-    
+
     for p in ready_queue:
         p['class'] = classify_process(p, threshold)
         p['class_order'] = class_order[p['class']]
         p['current_wait'] = current_time - p['arrival_time']
-    
+
     # Separate urgent processes (starvation prevention)
     urgent = [p for p in ready_queue if p['current_wait'] >= URGENCY_WAIT_THRESHOLD]
     normal = [p for p in ready_queue if p['current_wait'] < URGENCY_WAIT_THRESHOLD]
-    
+
     # Sort urgent by wait time (longest wait first)
     urgent.sort(key=lambda p: -p['current_wait'])
-    
+
     # Sort normal by (class, burst_time, arrival_time)
     normal.sort(key=lambda p: (p['class_order'], p['burst_time'], p['arrival_time']))
-    
+
     # Urgent processes go first, then normal ordering
     return urgent + normal
 
@@ -115,18 +115,18 @@ def sort_ready_queue(ready_queue, threshold, current_time):
 def run_aeas(processes, dvfs_enabled=True, context_switch_time=0.5):
     """
     Execute the Adaptive Energy-Aware Scheduler (AEAS) algorithm.
-    
+
     This is the core contribution of the project. The algorithm:
     1. Dynamically classifies processes using an adaptive median threshold
     2. Applies DVFS to assign appropriate frequency/voltage levels
     3. Groups same-class processes to minimize context switch overhead
     4. Includes starvation prevention for fairness guarantees
-    
+
     Args:
         processes: List of process dicts with keys:
                    id, arrival_time, burst_time, priority
         dvfs_enabled: Whether to enable DVFS optimization (default: True)
-        
+
     Returns:
         Dictionary with:
             - algorithm: 'AEAS'
@@ -139,19 +139,19 @@ def run_aeas(processes, dvfs_enabled=True, context_switch_time=0.5):
     """
     procs = deep_copy_processes(processes)
     n = len(procs)
-    
+
     current_time = 0.0
     completed = []
     completed_ids = set()
     gantt = []
     energy_details = []
     switch_count = 0
-    
+
     while len(completed) < n:
         # ─── Step A: Add arrived processes to ready queue ───
-        ready = [p for p in procs 
+        ready = [p for p in procs
                  if p['arrival_time'] <= current_time and p['id'] not in completed_ids]
-        
+
         # ─── Step B: Handle empty ready queue (IDLE) ───
         if not ready:
             future = [p for p in procs if p['id'] not in completed_ids]
@@ -159,7 +159,7 @@ def run_aeas(processes, dvfs_enabled=True, context_switch_time=0.5):
                 break
             next_arrival = min(p['arrival_time'] for p in future)
             idle_duration = next_arrival - current_time
-            
+
             gantt.append({
                 'process': 'IDLE',
                 'start': round(current_time, 2),
@@ -169,32 +169,32 @@ def run_aeas(processes, dvfs_enabled=True, context_switch_time=0.5):
             })
             current_time = next_arrival
             continue
-        
+
         # ─── Step C: Compute adaptive threshold ───
         threshold = compute_adaptive_threshold(ready)
-        
+
         # ─── Step D & E: Classify and sort ready queue ───
         sorted_queue = sort_ready_queue(ready, threshold, current_time)
-        
+
         # ─── Step F: Select the highest-priority class group ───
         # Execute all processes in the top class group together
         # to minimize DVFS frequency transitions
         top_class = sorted_queue[0]['class']
         group = [p for p in sorted_queue if p['class'] == top_class]
-        
+
         # ─── Step G: Execute each process in the group ───
         for proc in group:
             # Recalculate waiting time at actual execution moment
             waiting_time = current_time - proc['arrival_time']
-            
+
             # Assign base frequency from classification
             base_freq = assign_base_frequency(proc['class'])
-            
+
             # Apply DVFS adjustments based on load and starvation
             final_freq, is_urgent = apply_dvfs_adjustment(
                 base_freq, proc['class'], len(ready), waiting_time, dvfs_enabled
             )
-            
+
             # Context switch overhead (except for first process)
             if switch_count > 0 and context_switch_time > 0:
                 gantt.append({
@@ -205,12 +205,12 @@ def run_aeas(processes, dvfs_enabled=True, context_switch_time=0.5):
                     'frequency': 'LOW'
                 })
                 current_time += context_switch_time
-            
+
             # Execute the process
             start_time = current_time
             exec_duration = proc['burst_time']
             end_time = current_time + exec_duration
-            
+
             gantt.append({
                 'process': proc['id'],
                 'start': round(start_time, 2),
@@ -218,7 +218,7 @@ def run_aeas(processes, dvfs_enabled=True, context_switch_time=0.5):
                 'duration': round(exec_duration, 2),
                 'frequency': final_freq
             })
-            
+
             # Record completion details
             proc['start_time'] = round(start_time, 2)
             proc['completion_time'] = round(end_time, 2)
@@ -226,7 +226,7 @@ def run_aeas(processes, dvfs_enabled=True, context_switch_time=0.5):
             proc['turnaround_time'] = round(end_time - proc['arrival_time'], 2)
             proc['frequency'] = final_freq
             proc['is_urgent'] = is_urgent
-            
+
             # Track energy details
             energy_details.append({
                 'process_id': proc['id'],
@@ -237,15 +237,15 @@ def run_aeas(processes, dvfs_enabled=True, context_switch_time=0.5):
                 'energy': round(get_power(final_freq) * exec_duration, 4),
                 'is_urgent': is_urgent
             })
-            
+
             current_time = end_time
             completed_ids.add(proc['id'])
             completed.append(proc)
             switch_count += 1
-    
+
     total_time = round(current_time, 2)
     metrics = compute_metrics(completed, total_time)
-    
+
     return {
         'algorithm': 'AEAS',
         'processes': completed,

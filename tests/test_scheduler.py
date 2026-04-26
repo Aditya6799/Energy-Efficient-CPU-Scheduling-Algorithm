@@ -57,7 +57,7 @@ class TestAEAS:
         """All processes must complete."""
         result = run_aeas(basic_processes)
         assert len(result['processes']) == 5
-    
+
     def test_aeas_returns_required_keys(self, basic_processes):
         """Result must contain all expected keys."""
         result = run_aeas(basic_processes)
@@ -65,7 +65,7 @@ class TestAEAS:
                      'energy_details', 'dvfs_enabled']
         for key in required:
             assert key in result, f"Missing key: {key}"
-    
+
     def test_aeas_critical_processes_first(self, same_arrival_processes):
         """Critical processes (priority ≤ 2) should execute before others."""
         result = run_aeas(same_arrival_processes)
@@ -75,14 +75,14 @@ class TestAEAS:
         non_critical_positions = [completed_ids.index('P1'), completed_ids.index('P3'),
                                   completed_ids.index('P5')]
         assert max(critical_positions) < min(non_critical_positions)
-    
+
     def test_aeas_dvfs_disabled(self, basic_processes):
         """When DVFS is off, all processes should run at HIGH frequency."""
         result = run_aeas(basic_processes, dvfs_enabled=False)
         for entry in result['gantt']:
             if entry['process'] not in ('IDLE', 'CTX_SWITCH'):
                 assert entry['frequency'] == 'HIGH'
-    
+
     def test_aeas_dvfs_enabled_varies_frequency(self, basic_processes):
         """When DVFS is on, frequencies should vary by classification."""
         result = run_aeas(basic_processes, dvfs_enabled=True)
@@ -92,13 +92,13 @@ class TestAEAS:
                 freqs.add(entry['frequency'])
         # With mixed priorities and burst times, we expect multiple frequency levels
         assert len(freqs) >= 2
-    
+
     def test_aeas_single_process(self, single_process):
         """Single process edge case."""
         result = run_aeas(single_process)
         assert len(result['processes']) == 1
         assert result['processes'][0]['completion_time'] == 5
-    
+
     def test_aeas_positive_metrics(self, basic_processes):
         """All metrics must be non-negative."""
         result = run_aeas(basic_processes)
@@ -116,17 +116,17 @@ class TestClassification:
         """Priority ≤ 2 should be CRITICAL."""
         proc = {'priority': 1, 'burst_time': 10}
         assert classify_process(proc, 5) == 'CRITICAL'
-    
+
     def test_short_classification(self):
         """BT ≤ threshold and priority > 2 should be SHORT."""
         proc = {'priority': 4, 'burst_time': 3}
         assert classify_process(proc, 5) == 'SHORT'
-    
+
     def test_long_classification(self):
         """BT > threshold and priority > 2 should be LONG."""
         proc = {'priority': 4, 'burst_time': 8}
         assert classify_process(proc, 5) == 'LONG'
-    
+
     def test_adaptive_threshold_median(self):
         """Threshold must be the median of burst times."""
         queue = [
@@ -146,13 +146,13 @@ class TestBaselines:
         result = run_fcfs(basic_processes)
         ids = [p['id'] for p in result['processes']]
         assert ids == ['P1', 'P2', 'P3', 'P4', 'P5']
-    
+
     def test_sjf_selects_shortest(self, same_arrival_processes):
         """SJF should execute shortest burst first when all arrive at 0."""
         result = run_sjf(same_arrival_processes)
         first = result['processes'][0]
         assert first['id'] == 'P2'  # BT=2 is shortest
-    
+
     def test_round_robin_preempts(self, same_arrival_processes):
         """RR should preempt processes at quantum boundary."""
         result = run_round_robin(same_arrival_processes, quantum=3)
@@ -160,13 +160,13 @@ class TestBaselines:
         process_entries = [g for g in result['gantt']
                           if g['process'] not in ('IDLE', 'CTX_SWITCH')]
         assert len(process_entries) > len(same_arrival_processes)
-    
+
     def test_priority_selects_highest(self, same_arrival_processes):
         """Priority scheduling should execute highest priority first."""
         result = run_priority(same_arrival_processes)
         first = result['processes'][0]
         assert first['id'] == 'P2'  # Priority=1 is highest
-    
+
     def test_all_baselines_complete(self, basic_processes):
         """All baselines must complete all processes."""
         for algo in [run_fcfs, run_sjf, run_round_robin, run_priority]:
@@ -181,15 +181,15 @@ class TestUtils:
     def test_median_odd(self):
         """Median of odd-length list."""
         assert compute_median([1, 3, 5, 7, 9]) == 5
-    
+
     def test_median_even(self):
         """Median of even-length list."""
         assert compute_median([1, 3, 5, 7]) == 4.0
-    
+
     def test_median_empty(self):
         """Median of empty list should return 0."""
         assert compute_median([]) == 0
-    
+
     def test_median_single(self):
         """Median of single element."""
         assert compute_median([42]) == 42
