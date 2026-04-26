@@ -2,7 +2,7 @@
    Premium Dark Glassmorphic Dashboard Theme
 */
 
-/* ── CSS Custom Properties (Design Tokens) ──────────────────── */
+/* ── CSS Custom Properties (Design Tokens)*/
 :root {
     /* Primary palette — Neon Emerald */
     --primary-hue: 155;
@@ -1043,7 +1043,7 @@ body::before {
     }
 }
 
-/* ── Plotly Overrides (Dark Theme) ──────────────────────────── */
+/* ── Plotly Overrides (Dark Theme)*/
 .js-plotly-plot .plotly .modebar {
     background: transparent !important;
 }

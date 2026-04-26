@@ -14,9 +14,9 @@ from scheduler.base_algorithms import run_fcfs, run_sjf, run_round_robin, run_pr
 from scheduler.utils import compute_median
 
 
-# ─────────────────────────────────────────────────────────────
+
 #  Test Fixtures
-# ─────────────────────────────────────────────────────────────
+
 @pytest.fixture
 def basic_processes():
     """Standard 5-process test set."""
